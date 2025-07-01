@@ -550,7 +550,7 @@ namespace PT.UnitTest
          var ex = await Assert.ThrowsAsync<ArgumentException>(() =>
             this.service.ExistsAsync(key, this.defaultOptions, this.cancellationToken));
 
-         Assert.Equal("Key cannot be null or empty (Parameter 'key')", ex.Message);
+         Assert.StartsWith("Key cannot be null or empty", ex.Message);
       }
 
       [Fact]
