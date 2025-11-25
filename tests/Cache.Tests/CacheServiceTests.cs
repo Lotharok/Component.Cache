@@ -1,16 +1,16 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Cache.Tests.Models;
 using Component.Cache;
 using Component.Cache.Contract;
 using Component.Cache.Models;
 using Component.Serialization.Contract;
 using Microsoft.Extensions.Logging;
 using Moq;
-using PT.UnitTest.Models;
 using Xunit;
 
-namespace PT.UnitTest
+namespace Cache.Tests
 {
    public class CacheServiceTests
    {

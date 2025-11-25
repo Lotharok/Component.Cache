@@ -2,7 +2,7 @@
 using Component.Cache.Models;
 using Component.Serialization.Contract;
 
-namespace PT.UnitTest.Models
+namespace Cache.Tests.Models
 {
    public class SerializatorStub<T> : ISerializator<T>
    {

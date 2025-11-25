@@ -1,33 +1,17 @@
-﻿using System;
-using System.Linq;
+using System;
+using System.Collections.Generic;
+using Cache.Tests.Models;
 using Component.Cache;
 using Component.Cache.Contract;
 using Component.Cache.Models;
 using Component.Serialization.Contract;
-using Microsoft.Extensions.Logging;
 using Moq;
-using PT.UnitTest.Models;
 using Xunit;
 
-namespace PT.UnitTest
+namespace Cache.Tests
 {
    public class CacheBackendResolverTests
    {
-      private readonly Mock<ILogger<CacheBackendResolver>> loggerMock;
-
-      public CacheBackendResolverTests()
-      {
-         this.loggerMock = new Mock<ILogger<CacheBackendResolver>>();
-      }
-
-      [Fact]
-      public void Constructor_ShouldThrow_WhenLoggerIsNull()
-      {
-         // Arrange & Act & Assert
-         Assert.Throws<ArgumentNullException>(() =>
-             new CacheBackendResolver(Enumerable.Empty<object>(), Enumerable.Empty<object>(), null));
-      }
-
       [Fact]
       public void GetBackend_ShouldReturnBackend_WhenExists()
       {
@@ -36,9 +20,8 @@ namespace PT.UnitTest
          var backendObj = new CacheBackendStub<string>(CacheType.InMemory, memoryBackend.Object);
 
          var resolver = new CacheBackendResolver(
-             new object[] { backendObj },
-             Enumerable.Empty<object>(),
-             this.loggerMock.Object);
+            new Dictionary<(CacheType, Type), object> { { (CacheType.InMemory, typeof(string)), backendObj } },
+            new Dictionary<(SerializerType, Type), object>());
 
          // Act
          var result = resolver.GetBackend<string>(CacheType.InMemory);
@@ -53,9 +36,8 @@ namespace PT.UnitTest
       {
          // Arrange
          var resolver = new CacheBackendResolver(
-             Enumerable.Empty<object>(),
-             Enumerable.Empty<object>(),
-             this.loggerMock.Object);
+            new Dictionary<(CacheType, Type), object>(),
+            new Dictionary<(SerializerType, Type), object>());
 
          // Act & Assert
          Assert.Throws<CacheBackendNotFoundException>(() =>
@@ -70,9 +52,11 @@ namespace PT.UnitTest
          var serializerObj = new SerializatorStub<string>(SerializerType.Json, jsonSerializer.Object);
 
          var resolver = new CacheBackendResolver(
-             Enumerable.Empty<object>(),
-             new object[] { serializerObj },
-             this.loggerMock.Object);
+            new Dictionary<(CacheType, Type), object>(),
+            new Dictionary<(SerializerType, Type), object>
+            {
+               { (SerializerType.Json, typeof(string)), serializerObj },
+            });
 
          // Act
          var result = resolver.GetSerializator<string>(SerializerType.Json);
@@ -87,9 +71,8 @@ namespace PT.UnitTest
       {
          // Arrange
          var resolver = new CacheBackendResolver(
-             Enumerable.Empty<object>(),
-             Enumerable.Empty<object>(),
-             this.loggerMock.Object);
+            new Dictionary<(CacheType, Type), object>(),
+            new Dictionary<(SerializerType, Type), object>());
 
          // Act & Assert
          Assert.Throws<SerializatorNotFoundException>(() =>
