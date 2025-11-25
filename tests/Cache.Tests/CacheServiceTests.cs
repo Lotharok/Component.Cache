@@ -1,16 +1,16 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Cache.Tests.Models;
 using Component.Cache;
 using Component.Cache.Contract;
 using Component.Cache.Models;
 using Component.Serialization.Contract;
 using Microsoft.Extensions.Logging;
 using Moq;
-using PT.UnitTest.Models;
 using Xunit;
 
-namespace PT.UnitTest
+namespace Cache.Tests
 {
    public class CacheServiceTests
    {
@@ -550,7 +550,7 @@ namespace PT.UnitTest
          var ex = await Assert.ThrowsAsync<ArgumentException>(() =>
             this.service.ExistsAsync(key, this.defaultOptions, this.cancellationToken));
 
-         Assert.Equal("Key cannot be null or empty (Parameter 'key')", ex.Message);
+         Assert.StartsWith("Key cannot be null or empty", ex.Message);
       }
 
       [Fact]

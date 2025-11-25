@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Component.Cache.Contract;
 using Component.Cache.Models;
 
-namespace PT.UnitTest.Models
+namespace Cache.Tests.Models
 {
    public class CacheBackendStub<T> : ICacheBackend<T>
    {

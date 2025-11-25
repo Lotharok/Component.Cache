@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Logging;
 using Moq;
 
-namespace PT.UnitTest.Models
+namespace Cache.Tests.Models
 {
    public static class LoggerTestExtensions
    {
