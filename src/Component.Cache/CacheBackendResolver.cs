@@ -11,7 +11,7 @@ namespace Component.Cache
    /// </summary>
    public class CacheBackendResolver : ICacheBackendResolver
    {
-      private readonly Dictionary<CacheType, object> backends;
+      private readonly Dictionary<(CacheType, Type), object> backends;
       private readonly Dictionary<(SerializerType, Type), object> serializators;
 
       /// <summary>
@@ -31,7 +31,7 @@ namespace Component.Cache
       /// and buffer types for efficient lookup during resolution operations.
       /// </remarks>
       public CacheBackendResolver(
-         Dictionary<CacheType, object> backends,
+         Dictionary<(CacheType, Type), object> backends,
          Dictionary<(SerializerType, Type), object> serializators)
       {
          this.backends = backends;
@@ -41,7 +41,7 @@ namespace Component.Cache
       /// <inheritdoc />
       public ICacheBackend<TBuffer> GetBackend<TBuffer>(CacheType type)
       {
-         if (this.backends.TryGetValue(type, out var backend) && backend is ICacheBackend<TBuffer> typed)
+         if (this.backends.TryGetValue((type, typeof(TBuffer)), out var backend) && backend is ICacheBackend<TBuffer> typed)
          {
             return typed;
          }

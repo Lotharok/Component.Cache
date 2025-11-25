@@ -20,7 +20,7 @@ namespace Cache.Tests
          var backendObj = new CacheBackendStub<string>(CacheType.InMemory, memoryBackend.Object);
 
          var resolver = new CacheBackendResolver(
-            new Dictionary<CacheType, object> { { CacheType.InMemory, backendObj } },
+            new Dictionary<(CacheType, Type), object> { { (CacheType.InMemory, typeof(string)), backendObj } },
             new Dictionary<(SerializerType, Type), object>());
 
          // Act
@@ -36,7 +36,7 @@ namespace Cache.Tests
       {
          // Arrange
          var resolver = new CacheBackendResolver(
-            new Dictionary<CacheType, object>(),
+            new Dictionary<(CacheType, Type), object>(),
             new Dictionary<(SerializerType, Type), object>());
 
          // Act & Assert
@@ -52,7 +52,7 @@ namespace Cache.Tests
          var serializerObj = new SerializatorStub<string>(SerializerType.Json, jsonSerializer.Object);
 
          var resolver = new CacheBackendResolver(
-            new Dictionary<CacheType, object>(),
+            new Dictionary<(CacheType, Type), object>(),
             new Dictionary<(SerializerType, Type), object>
             {
                { (SerializerType.Json, typeof(string)), serializerObj },
@@ -71,7 +71,7 @@ namespace Cache.Tests
       {
          // Arrange
          var resolver = new CacheBackendResolver(
-            new Dictionary<CacheType, object>(),
+            new Dictionary<(CacheType, Type), object>(),
             new Dictionary<(SerializerType, Type), object>());
 
          // Act & Assert
