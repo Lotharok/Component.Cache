@@ -1,0 +1,107 @@
+name: Build & Publish NuGet
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to build'
+        required: false
+
+env:
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Authenticate GitHub Packages
+        run: |
+          sed -i 's/%GITHUB_PACKAGES_USERNAME%/${{ github.actor }}/g' nuget.config
+          sed -i 's/%GITHUB_PACKAGES_TOKEN%/${{ secrets.GITHUB_TOKEN }}/g' nuget.config
+
+      - name: Determine version
+        id: version
+        run: |
+          BASE_VERSION=$(grep -oP '(?<=<Version>).*(?=</Version>)' src/Component.Cache/Component.Cache.csproj)
+          BUILD_NUMBER=${{ github.run_number }}
+
+          if [[ "${{ github.ref_name }}" == "master" ]]; then
+            VERSION="${BASE_VERSION}.${BUILD_NUMBER}"
+          else
+            BRANCH="${{ github.ref_name }}"
+            BRANCH_SUFFIX=$(echo "$BRANCH" | sed 's/[^a-zA-Z0-9-]/-/g')
+            VERSION="${BASE_VERSION}.${BUILD_NUMBER}-${BRANCH_SUFFIX}"
+          fi
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Resolved version: $VERSION"
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore -p:PackageVersion=${{ steps.version.outputs.version }}
+
+      - name: Test with coverage
+        run: >
+          dotnet test --configuration Release --no-restore --no-build
+          /p:CollectCoverage=true
+          /p:CoverletOutputFormat=cobertura
+          /p:CoverletOutput=../../coverage/
+          /p:ExcludeByAttribute="ExcludeFromCodeCoverage"
+          /p:Threshold=\"90,85\"
+          /p:ThresholdType=\"line,branch\"
+          /p:ThresholdStat=total
+
+      - name: Generate coverage report
+        if: always()
+        run: |
+          dotnet tool install -g dotnet-reportgenerator-globaltool
+          reportgenerator -reports:coverage/*.xml -targetdir:coveragereport -reporttypes:"HtmlInline;Cobertura;MarkdownSummaryGithub" -tag:"${{ github.run_number }}_${{ github.run_id }}"
+
+      - name: Publish coverage summary
+        if: always()
+        run: cat coveragereport/SummaryGithub.md >> $GITHUB_STEP_SUMMARY
+
+      - name: Add coverage comment to PR
+        if: github.event_name == 'pull_request'
+        run: gh pr comment $PR_NUMBER --edit-last --create-if-none --body-file coveragereport/SummaryGithub.md
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.number }}
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coveragereport/
+
+      - name: Pack
+        if: github.event_name != 'pull_request'
+        run: dotnet pack --configuration Release --no-restore --no-build --output ./nupkgs -p:PackageVersion=${{ steps.version.outputs.version }}
+
+      - name: Publish to GitHub Packages
+        if: github.event_name != 'pull_request'
+        run: dotnet nuget push ./nupkgs/*.nupkg --api-key ${{ secrets.GITHUB_TOKEN }} --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json --skip-duplicate
